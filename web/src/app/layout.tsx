@@ -4,6 +4,8 @@ import "./globals.css";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { CommandMenu } from "@/components/layout/command-menu";
+import { FloatingAssistant } from "@/components/chat/floating-assistant";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -45,6 +47,8 @@ export default function RootLayout({
           </div>
         </div>
         <CommandMenu />
+        <FloatingAssistant />
+        <Toaster />
       </body>
     </html>
   );
