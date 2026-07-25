@@ -1,8 +1,9 @@
 "use client"
 
+import type { SVGProps } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Activity, Server, Cpu, HardDrive, Network, AlertCircle, Clock } from "lucide-react"
+import { Activity, Server, Cpu, HardDrive, Network, AlertCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 import {
   LineChart,
@@ -188,7 +189,7 @@ export default function MonitoringPage() {
   )
 }
 
-function Bot(props: any) {
+function Bot(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}

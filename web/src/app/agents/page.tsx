@@ -1,12 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { ActivityLog, ClusterState } from "@/lib/types"
-import { Play, Square, RotateCcw, Activity } from "lucide-react"
+import { ClusterState } from "@/lib/types"
+import { Play, Square, RotateCcw } from "lucide-react"
 
 const AGENTS_META = [
   { id: "Clerk", desc: "Data intake + compliance generation" },
@@ -21,7 +19,6 @@ const AGENTS_META = [
 
 export default function AgentsPage() {
   const [data, setData] = useState<ClusterState | null>(null)
-  const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   const fetchState = () => {
@@ -29,7 +26,6 @@ export default function AgentsPage() {
       .then(res => res.json())
       .then(json => {
         setData(json)
-        setLoading(false)
       })
   }
 

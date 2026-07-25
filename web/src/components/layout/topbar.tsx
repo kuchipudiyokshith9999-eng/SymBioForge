@@ -1,15 +1,48 @@
 "use client"
 
+import Link from "next/link"
+import { useEffect, useState } from "react"
 import { Bell, Search, Command, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react"
+import { LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import type { AuthSessionResponse } from "@/lib/auth"
 
 export function Topbar() {
+  const [session, setSession] = useState<AuthSessionResponse | null>(null)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  useEffect(() => {
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((payload: AuthSessionResponse) => setSession(payload))
+      .catch(() => setSession({ authEnabled: false, authRequired: false, user: null }))
+  }, [])
+
+  async function handleLogout() {
+    setLoggingOut(true)
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+      window.location.href = "/login"
+    } finally {
+      setLoggingOut(false)
+    }
+  }
+
   return (
     <div className="h-16 border-b border-zinc-800 bg-zinc-950/50 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-50">
       <div className="flex items-center flex-1">
@@ -75,11 +108,61 @@ export function Topbar() {
           </PopoverContent>
         </Popover>
 
-        <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-emerald-500 to-cyan-500 p-0.5 cursor-pointer">
-          <div className="h-full w-full rounded-full bg-zinc-950 border border-zinc-800/50 flex items-center justify-center">
-            <span className="text-xs font-semibold text-white">AD</span>
+        {session?.user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-3 rounded-full border border-zinc-800 bg-zinc-900/60 px-2 py-1 pr-3 text-left transition-colors hover:border-zinc-700">
+                <Avatar className="h-8 w-8 border border-zinc-700">
+                  <AvatarFallback className="bg-emerald-500/20 text-xs font-semibold text-emerald-300">
+                    {session.user.initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden sm:block">
+                  <p className="text-sm font-medium text-zinc-200">{session.user.fullName}</p>
+                  <p className="text-xs text-zinc-500">{session.user.email}</p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 border-zinc-800 bg-zinc-950 text-zinc-100">
+              <DropdownMenuLabel>
+                <div className="space-y-0.5">
+                  <p className="font-medium">{session.user.fullName}</p>
+                  <p className="text-xs text-zinc-500">{session.user.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-zinc-800" />
+              <DropdownMenuItem asChild>
+                <Link href="/settings/profile">Profile settings</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-red-300 focus:bg-red-500/10 focus:text-red-200"
+                disabled={loggingOut}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {loggingOut ? "Signing out..." : "Sign out"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : session?.authEnabled ? (
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" className="text-zinc-300 hover:text-white">
+              <Link href="/login">Sign in</Link>
+            </Button>
+            <Button asChild className="bg-emerald-600 text-white hover:bg-emerald-500">
+              <Link href="/signup">Create account</Link>
+            </Button>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5">
+            <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-amber-300">
+              Demo
+            </span>
+            <Avatar className="h-7 w-7 border border-zinc-700">
+              <AvatarFallback className="bg-zinc-800 text-xs text-zinc-200">DM</AvatarFallback>
+            </Avatar>
+          </div>
+        )}
       </div>
     </div>
   )

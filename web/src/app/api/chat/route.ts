@@ -1,13 +1,21 @@
 import { createGroq } from '@ai-sdk/groq';
 import { generateText } from 'ai';
-import { engine } from '@/lib/engine';
+import { getSyncedEngine, persistFactory } from '@/lib/server/synced-engine';
 
 export async function POST(req: Request) {
+  if (!process.env.GROQ_API_KEY) {
+    return new Response(JSON.stringify({ error: 'GROQ_API_KEY is not configured.' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   const groq = createGroq({
     apiKey: process.env.GROQ_API_KEY,
   });
 
   const { messages } = await req.json();
+  const engine = await getSyncedEngine();
 
   const clusterState = engine.getState();
   const factoryList = clusterState.factories.map(f => `• ${f.name} [${f.id}] (${f.industryType}) — wastes: ${f.declaredWastes.join(', ')}`).join('\n');
@@ -77,6 +85,7 @@ Be concise, helpful, and professional. When asked about something, use the data 
           rawMaterials: data.rawMaterials || [],
           declaredWastes: data.declaredWastes || [],
         });
+        await persistFactory(factory);
         // Replace the JSON block with a success message
         responseText = responseText.replace(match[0], 
           `✅ **Factory "${factory.name}" registered successfully!** (ID: ${factory.id})\n` +

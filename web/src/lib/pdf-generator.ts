@@ -2,8 +2,17 @@ import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { Factory } from "@/lib/types"
 
-export async function generateFormVPDF(factory: Factory): Promise<boolean> {
-  try {
+type AutoTableDocument = jsPDF & {
+  lastAutoTable?: {
+    finalY?: number
+  }
+}
+
+function getLastTableY(doc: jsPDF, fallback: number): number {
+  return (doc as AutoTableDocument).lastAutoTable?.finalY ?? fallback
+}
+
+export function buildFormVPDFDocument(factory: Factory): jsPDF {
     const doc = new jsPDF()
 
     // Title
@@ -52,7 +61,7 @@ export async function generateFormVPDF(factory: Factory): Promise<boolean> {
     })
 
     // Section C
-    const finalY = (doc as any).lastAutoTable.finalY || 135
+    const finalY = getLastTableY(doc, 135)
     
     doc.setFontSize(14)
     doc.setFont("helvetica", "bold")
@@ -73,19 +82,31 @@ export async function generateFormVPDF(factory: Factory): Promise<boolean> {
     })
 
     // Footer signature
-    const sigY = (doc as any).lastAutoTable.finalY + 30
+    const sigY = getLastTableY(doc, finalY + 30) + 30
     if (sigY > 260) {
       doc.addPage()
       doc.text("Signature of the Occupier: ____________________", 130, 30)
-      doc.text(`Name: Admin User`, 130, 40)
-      doc.text(`Designation: Plant Head`, 130, 50)
+    doc.text("Name: Admin User", 130, 40)
+    doc.text("Designation: Plant Head", 130, 50)
     } else {
       doc.text("Signature of the Occupier: ____________________", 130, sigY)
-      doc.text(`Name: Admin User`, 130, sigY + 10)
-      doc.text(`Designation: Plant Head`, 130, sigY + 20)
+      doc.text("Name: Admin User", 130, sigY + 10)
+      doc.text("Designation: Plant Head", 130, sigY + 20)
     }
 
-    doc.save(`Form_V_${factory.name.replace(/\s+/g, '_')}_${year}.pdf`)
+    return doc
+}
+
+export function formVPDFFileName(factory: Factory): string {
+  const year = new Date().getFullYear()
+  const safeName = factory.name.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "")
+  return `Form_V_${safeName || factory.id}_${year}.pdf`
+}
+
+export async function generateFormVPDF(factory: Factory): Promise<boolean> {
+  try {
+    const doc = buildFormVPDFDocument(factory)
+    doc.save(formVPDFFileName(factory))
     return true
   } catch (error) {
     console.error("PDF Generation failed", error)

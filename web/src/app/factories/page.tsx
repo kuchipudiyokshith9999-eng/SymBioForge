@@ -11,8 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Search, Plus, Factory as FactoryIcon, MapPin, Activity } from "lucide-react"
+import { Search } from "lucide-react"
 import { RegisterFactoryDialog } from "@/components/factories/register-factory-dialog"
 
 export default function FactoriesPage() {

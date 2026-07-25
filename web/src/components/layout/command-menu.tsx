@@ -7,7 +7,6 @@ import {
   Lightbulb,
   LayoutDashboard,
   Settings,
-  Recycle,
   Network,
   Bot,
   Wrench,

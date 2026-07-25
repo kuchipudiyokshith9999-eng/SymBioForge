@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { engine } from '@/lib/engine';
+import { getSyncedEngine } from '@/lib/server/synced-engine';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { action } = body;
+    const engine = await getSyncedEngine();
 
     if (!action || !['start', 'stop', 'reset'].includes(action)) {
       return NextResponse.json(

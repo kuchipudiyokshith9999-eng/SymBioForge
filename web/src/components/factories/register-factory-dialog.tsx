@@ -16,7 +16,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -62,11 +61,12 @@ export function RegisterFactoryDialog({ onSuccess }: { onSuccess: () => void }) 
       setOpen(false)
       form.reset()
       onSuccess()
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred."
       toast({
         variant: "destructive",
         title: "Registration Failed",
-        description: error.message || "An unexpected error occurred.",
+        description: message,
       })
     }
   }
@@ -82,7 +82,7 @@ export function RegisterFactoryDialog({ onSuccess }: { onSuccess: () => void }) 
         <DialogHeader>
           <DialogTitle className="text-zinc-100">Register Factory</DialogTitle>
           <DialogDescription className="text-zinc-400">
-            Add a new industrial node to the symbiosis network. Click save when you're done.
+            Add a new industrial node to the symbiosis network. Click save when you are done.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

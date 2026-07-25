@@ -9,7 +9,7 @@ export class ComplianceGenerator {
    * Falls back to a well-formatted HTML file if PDFKit fails for any reason.
    * Returns the absolute path to the generated file.
    */
-  public async generateSbcbReport(factory: Factory): Promise<string> {
+  public async generateSpcbReport(factory: Factory): Promise<string> {
     const reportsDir = path.join(process.cwd(), '.reports');
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
@@ -56,7 +56,7 @@ export class ComplianceGenerator {
            .moveDown(1.2);
 
         // ── Part A: Factory Profile ──────────────────────────────────────────
-        this.pdfSection(doc, 'PART A — FACTORY PROFILE');
+        this.pdfSection(doc, 'PART A - FACTORY PROFILE');
         this.pdfField(doc, '1. Name of Owner / Occupier', `Director, ${factory.name}`);
         this.pdfField(doc, '2. Industry Category', 'Red / Large (as per CPCB Schedule)');
         this.pdfField(doc, '3. Industry Type', factory.industryType);
@@ -66,25 +66,25 @@ export class ComplianceGenerator {
         doc.moveDown(0.8);
 
         // ── Part B: Materials & Water ────────────────────────────────────────
-        this.pdfSection(doc, 'PART B — WATER & RAW MATERIAL CONSUMPTION');
-        this.pdfField(doc, '1. Water Consumption (m³/day)', '');
+        this.pdfSection(doc, 'PART B - WATER & RAW MATERIAL CONSUMPTION');
+        this.pdfField(doc, '1. Water Consumption (m3/day)', '');
         doc.fontSize(9).font('Helvetica')
-           .text('   Process : 15.0 m³/day   |   Cooling/Boiler : 5.0 m³/day   |   Domestic : 2.5 m³/day');
+           .text('   Process: 15.0 m3/day   |   Cooling/Boiler: 5.0 m3/day   |   Domestic: 2.5 m3/day');
         this.pdfField(doc, '2. Raw Materials Consumed', factory.rawMaterials.join(', ') || 'N/A');
         doc.moveDown(0.8);
 
         // ── Part C: Emissions ────────────────────────────────────────────────
-        this.pdfSection(doc, 'PART C — POLLUTION DISCHARGED TO ENVIRONMENT');
-        this.pdfField(doc, '1. Treated Wastewater Discharged', '12.5 m³/day (treated to SPCB-prescribed standards)');
-        this.pdfField(doc, '2. Air Emissions (Stack)', 'PM10, PM2.5, SO₂, NOₓ — within permissible limits');
+        this.pdfSection(doc, 'PART C - POLLUTION DISCHARGED TO ENVIRONMENT');
+        this.pdfField(doc, '1. Treated Wastewater Discharged', '12.5 m3/day (treated to SPCB-prescribed standards)');
+        this.pdfField(doc, '2. Air Emissions (Stack)', 'PM10, PM2.5, SO2, NOx - within permissible limits');
         doc.moveDown(0.8);
 
         // ── Part D: Waste Streams ────────────────────────────────────────────
-        this.pdfSection(doc, 'PART D — HAZARDOUS & SOLID WASTES GENERATED');
+        this.pdfSection(doc, 'PART D - HAZARDOUS & SOLID WASTES GENERATED');
         if (factory.wasteStreams && factory.wasteStreams.length > 0) {
           factory.wasteStreams.forEach((w, i) => {
             doc.fontSize(9).font('Helvetica').text(
-              `   ${i + 1}. ${w.name} — ${w.volume} kg/day ` +
+              `   ${i + 1}. ${w.name} - ${w.volume} kg/day ` +
               `(Category: ${w.category}, Form: ${w.physicalForm}, ` +
               `Contamination: ${w.contamination}, Reuse Potential: ${w.reusePotential}%)`
             );
@@ -99,11 +99,11 @@ export class ComplianceGenerator {
         doc.moveDown(0.8);
 
         // ── Part E: Disposal & Circular Economy ──────────────────────────────
-        this.pdfSection(doc, 'PART E — DISPOSAL PRACTICE & CIRCULAR ECONOMY STATUS');
+        this.pdfSection(doc, 'PART E - DISPOSAL PRACTICE & CIRCULAR ECONOMY STATUS');
         this.pdfField(doc, '1. Solid Waste Disposal', 'Via authorised recyclers / CPCB-approved landfill');
-        this.pdfField(doc, '2. SymbioForge Integration', 'Active — waste data feeds autonomous symbiosis network');
-        this.pdfField(doc, '3. CO₂ Avoided (tons/year)', `${factory.co2Avoided}`);
-        this.pdfField(doc, '4. Financial Savings Earned (INR/year)', `₹${factory.savingsEarned.toLocaleString('en-IN')}`);
+        this.pdfField(doc, '2. SymbioForge Integration', 'Active - waste data feeds autonomous symbiosis network');
+        this.pdfField(doc, '3. CO2 Avoided (tons/year)', `${factory.co2Avoided}`);
+        this.pdfField(doc, '4. Financial Savings Earned (INR/year)', `INR ${factory.savingsEarned.toLocaleString('en-IN')}`);
         doc.moveDown(1.2);
 
         // ── Declaration ──────────────────────────────────────────────────────
@@ -128,6 +128,13 @@ export class ComplianceGenerator {
         reject(err);
       }
     });
+  }
+
+  /**
+   * Backward-compatible alias for older callers.
+   */
+  public async generateSbcbReport(factory: Factory): Promise<string> {
+    return this.generateSpcbReport(factory);
   }
 
   private pdfSection(doc: InstanceType<typeof PDFDocument>, title: string) {

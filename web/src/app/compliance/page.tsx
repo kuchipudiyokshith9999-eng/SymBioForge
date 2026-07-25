@@ -12,14 +12,12 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { generateFormVPDF } from "@/lib/pdf-generator"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, Download, AlertCircle, CheckCircle2, FileText, Search, FileCheck2, Clock } from "lucide-react"
+import { Loader2, Download, FileCheck2, Clock } from "lucide-react"
 
 export default function CompliancePage() {
   const [factories, setFactories] = useState<Factory[]>([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState("")
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
   const { toast } = useToast()
 
@@ -35,12 +33,30 @@ export default function CompliancePage() {
   const handleDownload = async (factory: Factory) => {
     try {
       setDownloadingId(factory.id)
-      await generateFormVPDF(factory)
+      const response = await fetch(`/api/compliance/${factory.id}/pdf`)
+      if (!response.ok) {
+        throw new Error(await response.text())
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const filename = response.headers
+        .get("Content-Disposition")
+        ?.match(/filename="([^"]+)"/)?.[1] ?? `Form_V_${factory.id}.pdf`
+
+      const link = document.createElement("a")
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+
       toast({
         title: "Download Successful",
         description: `Form V for ${factory.name} generated successfully.`,
       })
-    } catch (error: any) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Download Failed",

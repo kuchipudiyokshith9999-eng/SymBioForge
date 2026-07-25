@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { engine } from '@/lib/engine';
+import { getSyncedEngine } from '@/lib/server/synced-engine';
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const engine = await getSyncedEngine();
   const blueprint = engine.getBlueprintByOpportunityId(id);
 
   if (!blueprint) {

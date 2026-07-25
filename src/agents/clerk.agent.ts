@@ -34,7 +34,7 @@ export class ClerkAgent {
     this.stateManager.addLog('Clerk', `New registration: "${factory.name}"`, 'success');
 
     // Generate PDF asynchronously
-    const reportPath = await this.complianceGenerator.generateSbcbReport(factory);
+    const reportPath = await this.complianceGenerator.generateSpcbReport(factory);
     this.stateManager.addLog('Clerk', `SPCB Annual Statement generated for "${factory.name}" at ${reportPath}`, 'success');
 
     // Trigger Scout
@@ -50,6 +50,6 @@ export class ClerkAgent {
     const factory = this.stateManager.getFactory(factoryId);
     if (!factory) return null;
 
-    return await this.complianceGenerator.generateSbcbReport(factory);
+    return await this.complianceGenerator.generateSpcbReport(factory);
   }
 }

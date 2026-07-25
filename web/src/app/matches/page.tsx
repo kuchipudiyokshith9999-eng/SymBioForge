@@ -42,7 +42,7 @@ export default function MatchesPage() {
       <div className="flex flex-col items-center justify-center h-[50vh] text-zinc-400">
         <Network className="h-12 w-12 mb-4 opacity-50" />
         <h2 className="text-xl font-semibold text-zinc-300">No Matches Found</h2>
-        <p className="mt-2 text-sm text-center max-w-md">The Matchmaker agent hasn't identified any symbiotic links between factories yet.</p>
+        <p className="mt-2 text-sm text-center max-w-md">The Matchmaker agent has not identified any symbiotic links between factories yet.</p>
       </div>
     )
   }

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { engine } from '@/lib/engine';
+import { getSyncedEngine, persistFactory } from '@/lib/server/synced-engine';
 
 export async function GET() {
+  const engine = await getSyncedEngine();
   const factories = engine.getFactories();
   return NextResponse.json({ factories });
 }
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const engine = await getSyncedEngine();
     const factory = engine.registerFactory({
       name,
       industryType,
@@ -27,9 +29,11 @@ export async function POST(request: NextRequest) {
       rawMaterials,
       declaredWastes,
     });
+    await persistFactory(factory);
 
     return NextResponse.json({ factory }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Invalid request body';
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

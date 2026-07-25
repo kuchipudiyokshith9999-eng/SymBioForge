@@ -124,7 +124,6 @@ class SymbioticEngine {
 
   runMatchmaking(): void {
     const rules = getCompatibilityRules();
-    const materialsDb = getMaterialsDb();
     const emissionFactors = getEmissionFactors();
     this.matches = [];
 
@@ -353,7 +352,6 @@ class SymbioticEngine {
   // ---- Public API methods -------------------------------------------------
 
   getState(): ClusterState {
-    const emissionFactors = getEmissionFactors();
     const totalCo2Avoided = +this.matches
       .reduce((s, m) => s + m.co2SavedTonsPerYear, 0)
       .toFixed(1);
@@ -394,6 +392,38 @@ class SymbioticEngine {
 
   getFactories(): Factory[] {
     return this.factories;
+  }
+
+  replaceFactories(factories: Factory[]): void {
+    const materialsDb = getMaterialsDb();
+    this.factories = factories.map((factory) => ({
+      ...factory,
+      wasteStreams: factory.wasteStreams?.length
+        ? factory.wasteStreams
+        : factory.declaredWastes.map((wasteName, idx) => {
+            const mat = materialsDb[wasteName];
+            return {
+              id: `${factory.id}_ws_${idx + 1}`,
+              factoryId: factory.id,
+              factoryName: factory.name,
+              name: wasteName,
+              category: (mat?.category ?? "chemical") as WasteStream["category"],
+              physicalForm: (mat?.physicalForm ?? "solid") as WasteStream["physicalForm"],
+              volume: mat?.volumeEstimate ?? 50,
+              contamination: (mat?.contamination ?? "mild") as WasteStream["contamination"],
+              seasonalVariation: (mat?.seasonalVariation ?? "none") as WasteStream["seasonalVariation"],
+              reusePotential: mat?.reusePotential ?? 50,
+            };
+          }),
+    }));
+
+    this.matches = [];
+    this.products = [];
+    this.blueprints = [];
+    this.runMatchmaking();
+    this.runProductGeneration();
+    this.generateBlueprints();
+    this.log("System", `State synchronized from database with ${this.factories.length} factories.`, "info");
   }
 
   registerFactory(data: {
@@ -520,7 +550,6 @@ class SymbioticEngine {
     byFactory: { factoryId: string; factoryName: string; co2Avoided: number; landfillDiverted: number }[];
     byWasteCategory: Record<string, { co2: number; volume: number }>;
   } {
-    const emissionFactors = getEmissionFactors();
     const totalCo2Avoided = +this.matches
       .reduce((s, m) => s + m.co2SavedTonsPerYear, 0)
       .toFixed(1);

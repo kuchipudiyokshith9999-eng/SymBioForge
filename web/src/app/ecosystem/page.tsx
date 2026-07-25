@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Badge } from "@/components/ui/badge"
 
 interface EcosystemData {
   nodes: { id: string; label: string; type: string; lat: number; lng: number }[];

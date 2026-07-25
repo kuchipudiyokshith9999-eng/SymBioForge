@@ -15,12 +15,7 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  user: {
-    id: "u_1",
-    name: "Admin User",
-    email: "admin@symbioforge.com",
-    role: "admin",
-  },
+  user: null,
   sidebarExpanded: true,
   setUser: (user) => set({ user }),
   toggleSidebar: () => set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),

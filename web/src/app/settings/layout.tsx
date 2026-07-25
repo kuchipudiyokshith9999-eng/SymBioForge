@@ -1,6 +1,6 @@
 import { ReactNode } from "react"
 import Link from "next/link"
-import { Settings, User, Shield, Bell, Key, Network, Users, Palette } from "lucide-react"
+import { User, Shield, Bell, Key, Network, Users, Palette } from "lucide-react"
 
 export default function SettingsLayout({ children }: { children: ReactNode }) {
   const navItems = [
