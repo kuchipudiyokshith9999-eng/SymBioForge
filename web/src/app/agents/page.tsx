@@ -40,7 +40,10 @@ export default function AgentsPage() {
 
   const fetchState = () => {
     fetch("/api/cluster")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then((json) => {
         setData(json)
       })

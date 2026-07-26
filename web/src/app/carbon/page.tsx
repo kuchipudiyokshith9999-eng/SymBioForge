@@ -33,7 +33,10 @@ export default function CarbonPage() {
 
   useEffect(() => {
     fetch("/api/carbon")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then(data => {
         setMetrics(data)
         setLoading(false)

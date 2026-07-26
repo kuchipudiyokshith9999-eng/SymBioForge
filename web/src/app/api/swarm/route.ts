@@ -6,7 +6,7 @@ import {
   getRequestIdentifier,
 } from "@/lib/server/rate-limit"
 import { getSyncedEngine } from "@/lib/server/synced-engine"
-import { requireAuthenticatedUser } from "@/lib/server/auth"
+import { guardRoute } from "@/lib/server/auth"
 
 export async function POST(request: NextRequest) {
   const rateLimit = consumeRateLimit({
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await requireAuthenticatedUser()
+    await guardRoute()
     const { action } = swarmActionSchema.parse(await request.json())
     const engine = await getSyncedEngine()
 

@@ -13,11 +13,15 @@ export default function EcosystemPage() {
 
   useEffect(() => {
     fetch("/api/ecosystem")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then(json => {
         setData(json)
         setLoading(false)
       })
+      .catch(() => setLoading(false))
   }, [])
 
   if (loading) {

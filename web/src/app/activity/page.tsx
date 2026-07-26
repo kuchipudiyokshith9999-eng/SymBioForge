@@ -17,11 +17,15 @@ export default function ActivityPage() {
 
   const fetchState = () => {
     fetch("/api/cluster")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then((json: ClusterState) => {
         setLogs(json.activityLogs || [])
         setLoading(false)
       })
+      .catch(() => setLoading(false))
   }
 
   useEffect(() => {

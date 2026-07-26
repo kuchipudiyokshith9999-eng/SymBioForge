@@ -21,7 +21,10 @@ export default function MatchesPage() {
 
   useEffect(() => {
     fetch("/api/matches")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then(data => {
         setMatches(data.matches || [])
         setLoading(false)
