@@ -21,7 +21,7 @@
 - **Event chain:** `FACTORY_REGISTERED -> FACTORY_PROFILED -> MATCHES_DISCOVERED -> PRODUCTS_INVENTED -> IMPACT_AUDITED -> PATHWAYS_DESIGNED -> ECOSYSTEM_STABLE`
 - Additional events: `SENTINEL_TRIGGERED`, `VOLUME_UPDATE`, `COMPLIANCE_DUE`, `FACTORY_UPDATED`
 
-### MCP Tools (11 total)
+### MCP Tools (15 total)
 
 | Tool | Purpose |
 |------|---------|
@@ -36,9 +36,18 @@
 | `get-compliance-report` | Generate SPCB Form V Annual Environmental Statement PDF |
 | `control-swarm` | Start, stop, or reset the autonomous agent swarm |
 | `trigger-disruption` | Simulate factory shutdown, test Sentinel self-healing |
-| `trigger-compliance-check` | Force Sentinel to check all compliance deadlines |
+| `run-simulation` | SymbioSim: 12-month time machine simulation |
+| `get-impact-story` | Human-readable environmental and economic impact equivalencies |
+| `get-district-overview` | SPCB officer governance view with compliance and risk data |
+| `ingest-telemetry` | IoT telemetry ingestion + bulk factory import |
 
-### Widgets (9 Next.js UIs)
+### MCP Prompt Resource
+
+| Prompt | Purpose |
+|--------|---------|
+| `ask_symbioforge` | AI persona -- judges ask natural questions and get data-driven answers about the ecosystem |
+
+### Widgets (11 Next.js UIs)
 
 - Agent Swarm Monitor -- live agent visualization with Start/Stop/Reset controls
 - Ecosystem Map -- factory network graph
@@ -48,7 +57,25 @@
 - Waste Profiles -- factory waste stream details
 - Pathway Viewer -- blueprint step-by-step viewer
 - Compliance Dashboard -- SPCB Form V report viewer with PDF download
-- Calculator Result -- basic calculator (NitroStack sample)
+- SymbioSim Timeline -- 12-month simulation timeline
+- Impact Story -- human-readable impact equivalencies
+- District Dashboard -- SPCB officer governance view
+
+### Web Application (`web/`)
+
+Full-stack Next.js web application with:
+- **Auth** -- login/signup via Supabase
+- **Groq AI Chat** -- floating assistant with tool-calling for factory registration
+- **API routes** -- REST endpoints for all MCP tools (factories, matches, products, carbon, compliance, etc.)
+- **Full UI pages** -- factories, matches, carbon, waste-profiles, ecosystem, compliance, monitoring, blueprints, opportunities, agents, tools, docs, settings
+- **shadcn/ui** component library
+- **Production hardening** -- rate limiting, middleware, error handling, logging
+
+### Frontend Dashboard (`frontend/`)
+
+Standalone Next.js showcase dashboard designed for business executives:
+- **Landing page** -- hero, 6 impact stats, event chain timeline, 8 agent cards, real-world impact, 15 MCP tools grid, tech stack
+- **Executive Command Center** -- financial KPIs (savings, revenue, ROI, payback), opportunity pipeline ranked by value, SPCB compliance ring with overdue alerts, AI-invented products with CAPEX/margin/feasibility, factory leaderboard with utilization, 12-month projection chart, multi-hop supply chains, waste stream intelligence, system health with live activity feed
 
 ### Data & Business Logic
 
@@ -59,19 +86,22 @@
 - Emission factors for CO2, water, and energy savings
 - Market data for 3 product recipes
 - Real PDF generation via pdfkit for SPCB compliance reports
+- Optional Supabase integration with graceful fallback
 
-### Code Quality & Cleanup
+### Tests
+
+- `src/__tests__/compliance-generator.test.ts` -- PDF generation verification
+- `src/__tests__/state-manager.test.ts` -- singleton, factory CRUD, Supabase fallback
+- `web/src/__tests__/api/api.test.ts` -- API route validation
+- `web/src/__tests__/validations.test.ts` -- input validation schemas
+
+### Code Quality
 
 - Split monolithic 465-line `symbioforge.tools.ts` into 10 focused module files + `bootstrap.ts`
-- Removed ~2,072 lines of dead code (old type system, fixture loader, orphaned data files)
+- Removed ~2,072 lines of dead code
 - Single source of truth for all interfaces in `src/core/types.ts`
-- Added `MultiHopChain` interface and `totalEnergySaved` metric end-to-end
-- Merged divergent team changes (from `kuchipudiyokshith9999-eng/SymBioForge`) with local improvements
-
-### Git & Remotes
-
-- `origin` -- VtanayDarshan/symbioforge (pushed and up to date)
-- `team` -- kuchipudiyokshith9999-eng/SymBioForge (merged, local is ahead)
+- EventBus integration in ingest tools for automatic agent re-evaluation
+- Backward-compatible compliance generator rename (`generateSbcbReport` -> `generateSpcbReport`)
 
 ---
 
@@ -85,86 +115,39 @@ Tested in NitroStudio with STDIO transport. All core features passed:
 - Compliance Report: PDF generated with classified waste streams, CO2 and savings metrics
 - Sentinel disruption: detected affected chains, re-triggered Matchmaker
 - Scheduler drip feed: all 3 feed factories dripped successfully
-- All 9 widgets render correctly
+- All widgets render correctly
 
 ---
 
-## Hackathon Stretch Goals (4 Ideas)
+## Hackathon Stretch Goals -- ALL COMPLETED
 
-### ✅ Idea A — "Ask SymbioForge" AI Persona (Effort: 1-2 hours)
-**Status:** COMPLETED
+### ✅ Idea A -- "Ask SymbioForge" AI Persona
+`ask_symbioforge` Prompt resource in `src/modules/symbioforge.prompts.ts`. Feeds live cluster state into AI so judges can ask natural questions and get data-driven answers.
 
-A system prompt + MCP resource that turns NitroStack's built-in AI Chat into the SymbioForge ecosystem intelligence. Judges can type natural questions like:
-- "Why did you pair the foundry with the glass works?"
-- "Which factory should I register next to maximize impact?"
+### ✅ Idea B -- Government/SPCB Officer Dashboard
+`get-district-overview` tool + `district-dashboard` widget. Compliance rates, deadline alerts, risk heatmap, carbon credits, Smart Cities alignment.
 
-The AI calls `get-pathway`, `get-ecosystem-map`, and other tools to explain ecosystem decisions in plain English, showing business logic and reasoning.
+### ✅ Idea C -- Economic Multiplier / Impact Story
+`get-impact-story` tool + `impact-story` widget. Translates metrics to human impact (cars off road, MSME loans funded, land saved, jobs created, tax revenue).
 
-**Implementation:** `ask_symbioforge` Prompt resource in `src/modules/symbioforge.prompts.ts` — feeds live cluster state (factories, matches, chains, products, metrics) into the AI so it can explain autonomous decisions with real data.
-
----
-
-### ✅ Idea B — Government/SPCB Officer Dashboard (Effort: 2-3 hours)
-**Status:** COMPLETED
-
-A new `get-district-overview` tool + `district-dashboard` widget showing what a District Environmental Officer would see:
-- Cluster-wide compliance rates (% of factories current on SPCB filings)
-- Factories approaching filing deadlines (red/yellow/green risk heatmap)
-- Total waste diverted from landfills vs district targets
-- Carbon credits earned across the cluster
-- Economic impact for Smart Cities Mission alignment
-
-**Implementation:** Aggregates data already in StateManager; new widget visualizes it for governance stakeholders.
+### ✅ Idea D -- SymbioSim Time Machine
+`run-simulation` tool + `symbiosis-timeline` widget. 12-month ecosystem simulation with factory registration, match formation, disruption, and recovery.
 
 ---
 
-### ✅ Idea C — Economic Multiplier / "SymbioForge Impact Story" (Effort: 2-3 hours)
-**Status:** COMPLETED
+## Git & Remotes
 
-A storytelling widget (`get-impact-story` tool + `impact-story` widget) that translates raw metrics into human impact:
-- "184 tons CO2 — equivalent to taking 40 cars off the road for a year"
-- "INR 22L saved — enough to fund 11 MSME micro-loans"
-- "145 tons diverted from landfill — saving 580 sq meters of land"
-- Jobs created (transport, processing, quality testing)
-- Tax revenue generated
-- SDG alignment (Goals 9, 11, 12, 13)
-
-**Implementation:** Uses existing ImpactCalculator with human-readable equivalencies and emoji/visual storytelling.
+- `origin` -- VtanayDarshan/symbioforge
+- `team` -- kuchipudiyokshith9999-eng/SymBioForge (primary, all changes pushed here)
 
 ---
 
-### ⏳ Option 1 — "SymbioSim" Time Machine (Effort: 3-4 hours)
-**Status:** PENDING
+## What's Left
 
-Simulation mode where judges fast-forward time and watch 12 months of ecosystem evolution in 60 seconds:
-1. Swarm runs at 100x speed
-2. Factories join from drip feed
-3. Matches form, products get invented
-4. A factory shuts down (simulated disruption)
-5. Sentinel self-heals and ecosystem recovers
-6. Circular economy score climbs from 0% to 78%
-
-**Implementation:**
-- New MCP tool `run-simulation` that replays `factory-feed.json` at accelerated speed
-- Agent Swarm Monitor + Ecosystem Map widgets update in real time
-- Add simulation control bar widget: play, pause, speed slider (1x–100x), timeline scrubber
-
-**Why this matters:** Every other team shows a static snapshot. SymbioForge shows a MOVIE of an ecosystem coming alive. Judges watch the entire story unfold without narration.
-
----
-
-## What's Left To Do
-
-### Must Do (before submission)
-
+### Must Do
 1. **Deploy to NitroStack Cloud** -- click "+ Create Cloud App" in NitroStudio, configure, and deploy
-2. **Push latest changes to both remotes** -- keep origin and team in sync
 
-### Nice To Have (if time permits)
-
-4. **Add a demo video or GIF** -- record a 2-minute walkthrough showing all 4 ideas in action
-5. **Write test cases** -- NitroStudio has a "Test Cases" tab; add automated test cases for each tool
-6. **Improve Sentinel self-healing** -- currently logs affected chains; could actually reroute waste flows to alternative factories
-7. **Real-time widget updates** -- use polling or WebSocket to live-update Agent Swarm Monitor without user clicking tools
-8. **Multi-hop chain visualization** -- Ecosystem Map shows pairwise edges but doesn't yet visualize A->B->C chains
-9. **Historical metrics tracking** -- track CO2/water/energy over time; show trend charts in Carbon Dashboard
+### Nice To Have
+2. Record a 2-minute demo video showing all features
+3. Deploy `frontend/` to Vercel for a live dashboard preview
+4. Run vitest test suite to verify nothing is broken
