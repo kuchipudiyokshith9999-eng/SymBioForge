@@ -1,33 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSyncedEngine } from '@/lib/server/synced-engine';
+import { NextRequest, NextResponse } from "next/server"
+import { swarmActionSchema } from "@/lib/validations"
+import {
+  buildRateLimitHeaders,
+  consumeRateLimit,
+  getRequestIdentifier,
+} from "@/lib/server/rate-limit"
+import { getSyncedEngine } from "@/lib/server/synced-engine"
 
 export async function POST(request: NextRequest) {
+  const rateLimit = consumeRateLimit({
+    key: `swarm:${getRequestIdentifier(request)}`,
+    limit: 30,
+    windowMs: 10 * 60 * 1000,
+  })
+  const rateLimitHeaders = buildRateLimitHeaders(rateLimit)
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many swarm control requests. Please try again later." },
+      { status: 429, headers: rateLimitHeaders }
+    )
+  }
+
   try {
-    const body = await request.json();
-    const { action } = body;
-    const engine = await getSyncedEngine();
+    const { action } = swarmActionSchema.parse(await request.json())
+    const engine = await getSyncedEngine()
 
-    if (!action || !['start', 'stop', 'reset'].includes(action)) {
-      return NextResponse.json(
-        { error: 'Invalid action. Must be one of: start, stop, reset' },
-        { status: 400 }
-      );
+    if (action === "start") {
+      engine.setSwarmActive(true)
+      return NextResponse.json({ status: "started", swarmActive: true }, { headers: rateLimitHeaders })
     }
 
-    switch (action) {
-      case 'start':
-        engine.setSwarmActive(true);
-        return NextResponse.json({ status: 'started', swarmActive: true });
-      case 'stop':
-        engine.setSwarmActive(false);
-        return NextResponse.json({ status: 'stopped', swarmActive: false });
-      case 'reset':
-        engine.resetState();
-        return NextResponse.json({ status: 'reset', swarmActive: false });
-      default:
-        return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+    if (action === "stop") {
+      engine.setSwarmActive(false)
+      return NextResponse.json({ status: "stopped", swarmActive: false }, { headers: rateLimitHeaders })
     }
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+
+    engine.resetState()
+    return NextResponse.json({ status: "reset", swarmActive: false }, { headers: rateLimitHeaders })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Invalid request body"
+    return NextResponse.json({ error: message }, { status: 400, headers: rateLimitHeaders })
   }
 }

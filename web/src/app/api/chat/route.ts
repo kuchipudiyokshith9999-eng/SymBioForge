@@ -1,33 +1,83 @@
-import { createGroq } from '@ai-sdk/groq';
-import { generateText } from 'ai';
-import { getSyncedEngine, persistFactory } from '@/lib/server/synced-engine';
+import { createGroq } from "@ai-sdk/groq"
+import { generateText } from "ai"
+import { NextResponse } from "next/server"
+import { z } from "zod"
+import { chatRequestSchema } from "@/lib/validations"
+import {
+  buildRateLimitHeaders,
+  consumeRateLimit,
+  getRequestIdentifier,
+} from "@/lib/server/rate-limit"
+import { getSyncedEngine, persistFactory } from "@/lib/server/synced-engine"
+
+const COIMBATORE_CENTER = {
+  lat: 11.0168,
+  lng: 76.9558,
+}
+
+const registerFactorySchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  industryType: z.string().trim().min(2).max(100),
+  address: z.string().trim().min(5).max(200),
+  productionCapacity: z.string().trim().min(1).max(120),
+  rawMaterials: z.array(z.string().trim().min(1)).max(25).default([]),
+  declaredWastes: z.array(z.string().trim().min(1)).max(25).default([]),
+})
+
+function deterministicOffset(seed: string, range: number) {
+  let hash = 0
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) % 100000
+  }
+  return ((hash / 100000) - 0.5) * range
+}
 
 export async function POST(req: Request) {
-  if (!process.env.GROQ_API_KEY) {
-    return new Response(JSON.stringify({ error: 'GROQ_API_KEY is not configured.' }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  const rateLimit = consumeRateLimit({
+    key: `chat:${getRequestIdentifier(req)}`,
+    limit: 20,
+    windowMs: 5 * 60 * 1000,
+  })
+  const rateLimitHeaders = buildRateLimitHeaders(rateLimit)
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many chat requests. Please wait a few minutes and try again." },
+      { status: 429, headers: rateLimitHeaders }
+    )
   }
 
-  const groq = createGroq({
-    apiKey: process.env.GROQ_API_KEY,
-  });
+  try {
+    const { messages } = chatRequestSchema.parse(await req.json())
 
-  const { messages } = await req.json();
-  const engine = await getSyncedEngine();
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json(
+        { error: "GROQ_API_KEY is not configured." },
+        { status: 503, headers: rateLimitHeaders }
+      )
+    }
 
-  const clusterState = engine.getState();
-  const factoryList = clusterState.factories.map(f => `• ${f.name} [${f.id}] (${f.industryType}) — wastes: ${f.declaredWastes.join(', ')}`).join('\n');
-  const matchList = clusterState.matches.slice(0, 10).map(m => `• ${m.wasteStreamName}: ${m.sourceFactoryName} → ${m.targetFactoryName} (score: ${m.compatibilityScore}%)`).join('\n');
-  const productList = clusterState.products.slice(0, 5).map(p => `• ${p.name} — ${p.description} (feasibility: ${p.feasibilityScore}%)`).join('\n');
+    const engine = await getSyncedEngine()
+    const clusterState = engine.getState()
 
-  const systemPrompt = `You are the SymBioForge AI Assistant embedded inside the SymBioForge industrial symbiosis platform.
+    const factoryList = clusterState.factories
+      .map((factory) => `- ${factory.name} [${factory.id}] (${factory.industryType}) - wastes: ${factory.declaredWastes.join(", ")}`)
+      .join("\n")
+    const matchList = clusterState.matches
+      .slice(0, 10)
+      .map((match) => `- ${match.wasteStreamName}: ${match.sourceFactoryName} -> ${match.targetFactoryName} (score: ${match.compatibilityScore}%)`)
+      .join("\n")
+    const productList = clusterState.products
+      .slice(0, 5)
+      .map((product) => `- ${product.name} - ${product.description} (feasibility: ${product.feasibilityScore}%)`)
+      .join("\n")
+
+    const systemPrompt = `You are the SymBioForge AI Assistant embedded inside the SymBioForge industrial symbiosis platform.
 You help users manage their industrial symbiosis network.
 
 CAPABILITIES:
 - You can answer questions about factories, waste streams, matches, carbon metrics, and the platform.
-- When users ask to CREATE or REGISTER a factory, ask them for the details, then output a JSON block that the system will parse to create it. Use this EXACT format:
+- When users ask to create or register a factory, ask them for missing details, then output a JSON block that the system can parse:
 
 \`\`\`REGISTER_FACTORY
 {
@@ -49,7 +99,7 @@ CURRENT STATE:
 - Total Products: ${clusterState.products.length}
 - CO2 Avoided: ${clusterState.totalCo2Avoided} Tons
 - Landfill Diverted: ${clusterState.totalLandfillDiverted} Tons
-- Financial Value: ₹${clusterState.totalFinancialValue}
+- Financial Value: INR ${clusterState.totalFinancialValue}
 
 REGISTERED FACTORIES:
 ${factoryList}
@@ -60,53 +110,68 @@ ${matchList}
 PRODUCTS:
 ${productList}
 
-Be concise, helpful, and professional. When asked about something, use the data above to give real answers.`;
+Be concise, helpful, and professional. Use the data above for factual answers.`
 
-  try {
+    const groq = createGroq({
+      apiKey: process.env.GROQ_API_KEY,
+    })
+
     const result = await generateText({
-      model: groq('llama-3.3-70b-versatile'),
+      model: groq("llama-3.3-70b-versatile"),
       system: systemPrompt,
       messages,
-    });
+    })
 
-    let responseText = result.text;
+    let responseText = result.text
+    const factoryRegex = /```REGISTER_FACTORY\s*([\s\S]*?)```/g
+    let match: RegExpExecArray | null
 
-    // Parse and execute REGISTER_FACTORY blocks
-    const factoryRegex = /```REGISTER_FACTORY\s*([\s\S]*?)```/g;
-    let match;
     while ((match = factoryRegex.exec(responseText)) !== null) {
       try {
-        const data = JSON.parse(match[1].trim());
+        const data = registerFactorySchema.parse(JSON.parse(match[1].trim()))
+        const coordinateSeed = `${data.name}:${data.address}`
         const factory = engine.registerFactory({
           name: data.name,
           industryType: data.industryType,
-          location: { lat: 17.385 + Math.random() * 0.5, lng: 78.486 + Math.random() * 0.5, address: data.address },
+          location: {
+            lat: COIMBATORE_CENTER.lat + deterministicOffset(coordinateSeed, 0.08),
+            lng: COIMBATORE_CENTER.lng + deterministicOffset(coordinateSeed.split("").reverse().join(""), 0.08),
+            address: data.address,
+          },
           productionCapacity: data.productionCapacity,
-          rawMaterials: data.rawMaterials || [],
-          declaredWastes: data.declaredWastes || [],
-        });
-        await persistFactory(factory);
-        // Replace the JSON block with a success message
-        responseText = responseText.replace(match[0], 
-          `✅ **Factory "${factory.name}" registered successfully!** (ID: ${factory.id})\n` +
-          `• ${factory.wasteStreams?.length ?? 0} waste streams created\n` +
-          `• Matchmaking re-run — ${engine.getMatches().length} total matches now\n` +
-          `• Refresh the Factories page to see it.`
-        );
+          rawMaterials: data.rawMaterials,
+          declaredWastes: data.declaredWastes,
+        })
+
+        await persistFactory(factory)
+
+        responseText = responseText.replace(
+          match[0],
+          `Factory "${factory.name}" registered successfully. (ID: ${factory.id})\n` +
+            `- ${factory.wasteStreams?.length ?? 0} waste streams created\n` +
+            `- Matchmaking re-run; ${engine.getMatches().length} total matches now\n` +
+            "- Refresh the Factories page to see it."
+        )
       } catch {
-        responseText = responseText.replace(match[0], '❌ Failed to register factory — invalid data format.');
+        responseText = responseText.replace(match[0], "Failed to register factory due to invalid data format.")
       }
     }
 
     return new Response(responseText, {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-    });
+      headers: { ...rateLimitHeaders, "Content-Type": "text/plain; charset=utf-8" },
+    })
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("AI Chat Error:", message);
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    const message =
+      error instanceof z.ZodError
+        ? error.issues[0]?.message ?? "Invalid chat request."
+        : error instanceof Error
+          ? error.message
+          : String(error)
+
+    console.error("AI Chat Error:", message)
+    return NextResponse.json(
+      { error: message },
+      { status: error instanceof z.ZodError ? 400 : 500, headers: rateLimitHeaders }
+    )
   }
 }
