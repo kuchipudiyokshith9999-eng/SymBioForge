@@ -269,7 +269,7 @@ SymBioForge/
 
 ### Via Web Dashboard
 
-1. Open `http://localhost:3000` -- See the dashboard with cluster stats
+1. Open [https://sym-bio-forge.vercel.app](https://sym-bio-forge.vercel.app) (or `http://localhost:3000` locally) -- See the dashboard with cluster stats
 2. Navigate to **Ecosystem Map** -- Click factory nodes to see details
 3. Navigate to **Opportunities** -- Expand matches to see scoring details
 4. Navigate to **Carbon Impact** -- See before/after environmental metrics
@@ -300,6 +300,15 @@ Built for the NitroStack hackathon by a 4-member team from Amrita University.
 | Member 2 | Discovery Agent Development -- scout, profiler, matchmaker |
 | Member 3 | Creation Agent Development -- inventor, auditor, architect |
 | Member 4 | Widget & Data Development -- all 9 widgets, fixture data |
+
+---
+
+## Live Deployments
+
+| Service | URL |
+|---------|-----|
+| **Frontend (Vercel)** | https://sym-bio-forge.vercel.app/ |
+| **Backend MCP Server (NitroCloud)** | https://symbioforge-6a655bbb-tanays-org-0dcaa497.app.nitrocloud.ai |
 
 ---
 
