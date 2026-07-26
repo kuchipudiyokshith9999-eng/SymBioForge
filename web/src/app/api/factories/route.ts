@@ -6,6 +6,7 @@ import {
   getRequestIdentifier,
 } from "@/lib/server/rate-limit"
 import { getSyncedEngine, persistFactory } from "@/lib/server/synced-engine"
+import { logger } from "@/lib/server/logger"
 
 export async function GET() {
   const engine = await getSyncedEngine()
@@ -35,9 +36,11 @@ export async function POST(request: NextRequest) {
 
     await persistFactory(factory)
 
+    logger.info("Factory registered successfully", { factoryId: factory.id, reqId: getRequestIdentifier(request) });
     return NextResponse.json({ factory }, { status: 201, headers: rateLimitHeaders })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Invalid request body"
+    logger.warn("Factory registration failed", { error: message, reqId: getRequestIdentifier(request) });
     return NextResponse.json({ error: message }, { status: 400, headers: rateLimitHeaders })
   }
 }

@@ -48,6 +48,7 @@ pids/
 # Coverage
 coverage/
 .nyc_output/
+.reports/
 
 # Uploads
 uploads/
