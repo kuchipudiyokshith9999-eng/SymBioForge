@@ -17,9 +17,17 @@ export async function getSyncedEngine() {
   const now = Date.now()
   if (now - lastSyncAt < SYNC_TTL_MS) return engine
 
-  const factories = await loadFactoriesFromDatabase()
-  if (factories && factories.length > 0) {
-    engine.replaceFactories(factories)
+  try {
+    const factories = await loadFactoriesFromDatabase()
+    if (factories && factories.length > 0) {
+      engine.replaceFactories(factories)
+      const state = engine.getState()
+      if (state.matches.length === 0 && factories.length >= 5) {
+        engine.resetState()
+      }
+    }
+  } catch {
+    // DB unavailable — use seed data
   }
   lastSyncAt = now
 
