@@ -18,6 +18,11 @@ vi.mock('@/lib/server/rate-limit', () => ({
   getRequestIdentifier: vi.fn().mockReturnValue('test-ip')
 }));
 
+// Mock auth
+vi.mock('@/lib/server/auth', () => ({
+  requireAuthenticatedUser: vi.fn().mockResolvedValue({ id: 'test-user' })
+}));
+
 describe('Factories API Route', () => {
   test('GET /api/factories returns list of factories', async () => {
     const res = await GET();
