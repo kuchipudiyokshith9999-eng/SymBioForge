@@ -1,13 +1,10 @@
-import path from 'path';
-import fs from 'fs';
-
-const dataDir = path.resolve(process.cwd(), '..', 'src', 'data');
-
-function loadJson<T>(filename: string): T {
-  const filePath = path.join(dataDir, filename);
-  const raw = fs.readFileSync(filePath, 'utf-8');
-  return JSON.parse(raw) as T;
-}
+import factoriesInitialJson from '@/data/factories-initial.json';
+import factoryFeedJson from '@/data/factory-feed.json';
+import compatibilityMatrixJson from '@/data/compatibility-matrix.json';
+import materialsDbJson from '@/data/materials-db.json';
+import marketDataJson from '@/data/market-data.json';
+import manufacturingProcessesJson from '@/data/manufacturing-processes.json';
+import emissionFactorsJson from '@/data/emission-factors.json';
 
 export interface RawFactory {
   id: string;
@@ -75,64 +72,30 @@ export interface EmissionFactors {
   energySavedKwhPerKg: Record<string, number>;
 }
 
-// Lazy-loaded cached data
-let _factoriesInitial: RawFactory[] | null = null;
-let _factoryFeed: RawFactory[] | null = null;
-let _compatibilityRules: CompatibilityRule[] | null = null;
-let _materialsDb: Record<string, MaterialInfo> | null = null;
-let _marketProducts: MarketProduct[] | null = null;
-let _manufacturingProcesses: ManufacturingProcess[] | null = null;
-let _emissionFactors: EmissionFactors | null = null;
-
 export function getFactoriesInitial(): RawFactory[] {
-  if (!_factoriesInitial) {
-    _factoriesInitial = loadJson<RawFactory[]>('factories-initial.json');
-  }
-  return _factoriesInitial;
+  return factoriesInitialJson as RawFactory[];
 }
 
 export function getFactoryFeed(): RawFactory[] {
-  if (!_factoryFeed) {
-    _factoryFeed = loadJson<RawFactory[]>('factory-feed.json');
-  }
-  return _factoryFeed;
+  return factoryFeedJson as RawFactory[];
 }
 
 export function getCompatibilityRules(): CompatibilityRule[] {
-  if (!_compatibilityRules) {
-    const data = loadJson<{ rules: CompatibilityRule[] }>('compatibility-matrix.json');
-    _compatibilityRules = data.rules;
-  }
-  return _compatibilityRules;
+  return (compatibilityMatrixJson as { rules: CompatibilityRule[] }).rules;
 }
 
 export function getMaterialsDb(): Record<string, MaterialInfo> {
-  if (!_materialsDb) {
-    _materialsDb = loadJson<Record<string, MaterialInfo>>('materials-db.json');
-  }
-  return _materialsDb;
+  return materialsDbJson as Record<string, MaterialInfo>;
 }
 
 export function getMarketProducts(): MarketProduct[] {
-  if (!_marketProducts) {
-    const data = loadJson<{ products: MarketProduct[] }>('market-data.json');
-    _marketProducts = data.products;
-  }
-  return _marketProducts;
+  return (marketDataJson as { products: MarketProduct[] }).products;
 }
 
 export function getManufacturingProcesses(): ManufacturingProcess[] {
-  if (!_manufacturingProcesses) {
-    const data = loadJson<{ processes: ManufacturingProcess[] }>('manufacturing-processes.json');
-    _manufacturingProcesses = data.processes;
-  }
-  return _manufacturingProcesses;
+  return (manufacturingProcessesJson as { processes: ManufacturingProcess[] }).processes;
 }
 
 export function getEmissionFactors(): EmissionFactors {
-  if (!_emissionFactors) {
-    const data = loadJson<{ emissionFactors: EmissionFactors }>('emission-factors.json');
-    _emissionFactors = data.emissionFactors;
-  }
-  return _emissionFactors;
+  return (emissionFactorsJson as { emissionFactors: EmissionFactors }).emissionFactors;
 }

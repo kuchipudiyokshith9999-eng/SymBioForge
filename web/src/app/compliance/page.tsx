@@ -23,11 +23,15 @@ export default function CompliancePage() {
 
   useEffect(() => {
     fetch("/api/factories")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then(data => {
-        setFactories(data.factories)
+        setFactories(data.factories ?? [])
         setLoading(false)
       })
+      .catch(() => setLoading(false))
   }, [])
 
   const handleDownload = async (factory: Factory) => {

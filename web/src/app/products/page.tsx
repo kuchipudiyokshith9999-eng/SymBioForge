@@ -18,11 +18,15 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetch("/api/products")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then(data => {
-        setProducts(data.products)
+        setProducts(data.products ?? [])
         setLoading(false)
       })
+      .catch(() => setLoading(false))
   }, [])
 
   return (

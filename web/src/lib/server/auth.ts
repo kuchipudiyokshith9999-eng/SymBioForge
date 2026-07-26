@@ -127,6 +127,11 @@ export async function requireAuthenticatedUser(): Promise<User> {
   return user
 }
 
+export async function guardRoute(): Promise<void> {
+  if (!isAuthRequired() || !isSupabaseConfigured()) return
+  await requireAuthenticatedUser()
+}
+
 export async function setSupabaseSessionFromCookies(): Promise<boolean> {
   const supabase = getSupabaseServerClient()
   if (!supabase) return false

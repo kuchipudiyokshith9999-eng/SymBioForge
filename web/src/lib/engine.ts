@@ -27,7 +27,11 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-const rand = seededRandom(42);
+let rand = seededRandom(42);
+
+function resetRand(): void {
+  rand = seededRandom(42);
+}
 
 function randBetween(min: number, max: number): number {
   return Math.floor(rand() * (max - min + 1)) + min;
@@ -123,6 +127,7 @@ class SymbioticEngine {
   // ---- Matchmaking --------------------------------------------------------
 
   runMatchmaking(): void {
+    resetRand();
     const rules = getCompatibilityRules();
     const emissionFactors = getEmissionFactors();
     this.matches = [];
@@ -305,7 +310,7 @@ class SymbioticEngine {
         equipment: proc.requiredEquipment,
         facilityRequirements: proc.facilityRequirements,
         capexInr: proc.capexInr,
-        paybackMonths: Math.ceil(proc.capexInr / (match.savingsInrPerYear / 12)),
+        paybackMonths: match.savingsInrPerYear > 0 ? Math.ceil(proc.capexInr / (match.savingsInrPerYear / 12)) : 0,
         timelineWeeks: proc.timelineWeeks,
         regulatoryNotes: proc.regulatoryNotes,
       });
@@ -334,9 +339,9 @@ class SymbioticEngine {
         equipment: proc.requiredEquipment,
         facilityRequirements: proc.facilityRequirements,
         capexInr: proc.capexInr,
-        paybackMonths: Math.ceil(
+        paybackMonths: product.revenuePotentialInrPerYear > 0 ? Math.ceil(
           proc.capexInr / (product.revenuePotentialInrPerYear / 12)
-        ),
+        ) : 0,
         timelineWeeks: proc.timelineWeeks,
         regulatoryNotes: proc.regulatoryNotes,
       });

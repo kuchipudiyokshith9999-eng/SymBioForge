@@ -20,11 +20,15 @@ export default function WasteStreamsPage() {
 
   useEffect(() => {
     fetch("/api/waste-profiles")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then(data => {
-        setProfiles(data.profiles)
+        setProfiles(data.profiles ?? [])
         setLoading(false)
       })
+      .catch(() => setLoading(false))
   }, [])
 
   const filteredProfiles = profiles.filter(p => 

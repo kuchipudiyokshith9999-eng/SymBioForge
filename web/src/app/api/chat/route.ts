@@ -125,12 +125,11 @@ Be concise, helpful, and professional. Use the data above for factual answers.`
     })
 
     let responseText = result.text
-    const factoryRegex = /```REGISTER_FACTORY\s*([\s\S]*?)```/g
-    let match: RegExpExecArray | null
+    const factoryBlocks = Array.from(responseText.matchAll(/```REGISTER_FACTORY\s*([\s\S]*?)```/g))
 
-    while ((match = factoryRegex.exec(responseText)) !== null) {
+    for (const block of factoryBlocks) {
       try {
-        const data = registerFactorySchema.parse(JSON.parse(match[1].trim()))
+        const data = registerFactorySchema.parse(JSON.parse(block[1].trim()))
         const coordinateSeed = `${data.name}:${data.address}`
         const factory = engine.registerFactory({
           name: data.name,
@@ -148,14 +147,14 @@ Be concise, helpful, and professional. Use the data above for factual answers.`
         await persistFactory(factory)
 
         responseText = responseText.replace(
-          match[0],
+          block[0],
           `Factory "${factory.name}" registered successfully. (ID: ${factory.id})\n` +
             `- ${factory.wasteStreams?.length ?? 0} waste streams created\n` +
             `- Matchmaking re-run; ${engine.getMatches().length} total matches now\n` +
             "- Refresh the Factories page to see it."
         )
       } catch {
-        responseText = responseText.replace(match[0], "Failed to register factory due to invalid data format.")
+        responseText = responseText.replace(block[0], "Failed to register factory due to invalid data format.")
       }
     }
 

@@ -26,11 +26,15 @@ export default function OpportunitiesPage() {
 
   useEffect(() => {
     fetch("/api/opportunities")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then(data => {
-        setOpportunities(data.opportunities)
+        setOpportunities(data.opportunities ?? [])
         setLoading(false)
       })
+      .catch(() => setLoading(false))
   }, [])
 
   return (
