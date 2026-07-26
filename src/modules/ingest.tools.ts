@@ -1,9 +1,6 @@
 import { ToolDecorator as Tool, Injectable, ExecutionContext, z } from '@nitrostack/core';
-import { StateManager } from '../orchestrator/state-manager.js';
 import { WasteClassifier } from '../core/waste-classifier.js';
-import { MatchingAlgorithm } from '../core/matching-algorithm.js';
-
-const stateManager = StateManager.getInstance();
+import { stateManager, eventBus } from './bootstrap.js';
 
 @Injectable()
 export class IngestTools {
@@ -45,9 +42,22 @@ export class IngestTools {
       // Persist to database if configured
       await stateManager.persistFactory(factory);
 
+      eventBus.publish({
+        type: 'VOLUME_UPDATE',
+        payload: {
+          factoryId: args.factoryId,
+          currentVolume: args.volumeKgPerDay
+        }
+      });
+
+      eventBus.publish({
+        type: 'MATCHES_DISCOVERED',
+        payload: { matchIds: [] }
+      });
+
       return {
         success: true,
-        message: `Telemetry ingested. ${stream.name} volume updated from ${oldVolume} to ${args.volumeKgPerDay} kg/day.`,
+        message: `Telemetry ingested. ${stream.name} volume updated from ${oldVolume} to ${args.volumeKgPerDay} kg/day. Agent re-evaluation triggered.`,
         factory: factory.name,
         stream: stream.name,
         previousVolume: oldVolume,
@@ -69,9 +79,22 @@ export class IngestTools {
     stateManager.recalculateMetrics();
     await stateManager.persistFactory(factory);
 
+    eventBus.publish({
+      type: 'VOLUME_UPDATE',
+      payload: {
+        factoryId: args.factoryId,
+        currentVolume: args.volumeKgPerDay
+      }
+    });
+
+    eventBus.publish({
+      type: 'MATCHES_DISCOVERED',
+      payload: { matchIds: [] }
+    });
+
     return {
       success: true,
-      message: `New waste stream "${args.wasteStreamName}" added to ${factory.name} and classified. Volume: ${args.volumeKgPerDay} kg/day.`,
+      message: `New waste stream "${args.wasteStreamName}" added to ${factory.name}, classified, and sent through agent re-evaluation.`,
       factory: factory.name,
       newStream: newStream,
       timestamp: args.timestamp || new Date().toISOString()
@@ -134,21 +157,23 @@ export class IngestTools {
       }
     }
 
-    // Re-run matching algorithm on the full cluster
-    const matcher = new MatchingAlgorithm();
+    // Re-run the full agent pipeline through the event bus.
+    eventBus.publish({
+      type: 'MATCHES_DISCOVERED',
+      payload: { matchIds: [] }
+    });
+
     const allFactories = stateManager.getFactories();
-    const newMatches = matcher.findMatches(allFactories);
-    stateManager.setMatches(newMatches);
-    stateManager.recalculateMetrics();
+    const newMatches = stateManager.getMatches();
 
     const imported = results.filter(r => r.status === 'imported').length;
     const failed = results.filter(r => r.status !== 'imported').length;
 
-    stateManager.addLog('System', `Bulk import complete: ${imported} factories imported, ${failed} failed. Re-matched ${newMatches.length} symbioses across cluster.`, imported > 0 ? 'success' : 'warning');
+    stateManager.addLog('System', `Bulk import complete: ${imported} factories imported, ${failed} failed. Full agent pipeline re-evaluated ${newMatches.length} symbioses across cluster.`, imported > 0 ? 'success' : 'warning');
 
     return {
       success: true,
-      message: `Bulk import complete. ${imported} factories imported, ${newMatches.length} symbiotic matches discovered.`,
+      message: `Bulk import complete. ${imported} factories imported, ${newMatches.length} symbiotic matches available after full agent re-evaluation.`,
       results,
       newMatchesCount: newMatches.length,
       clusterSize: allFactories.length

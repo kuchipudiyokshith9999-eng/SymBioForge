@@ -11,7 +11,9 @@
     "start:prod": "node dist/index.js",
     "upgrade": "nitrostack-cli upgrade",
     "install:all": "nitrostack-cli install",
-    "widget": "npm --prefix src/widgets"
+    "widget": "npm --prefix src/widgets",
+    "test": "vitest run",
+    "verify": "npm run test && npm --prefix web run test && npm run build && npm --prefix web run build"
   },
   "dependencies": {
     "@modelcontextprotocol/ext-apps": ">=0.1.0",
@@ -25,7 +27,8 @@
     "@nitrostack/cli": "^1.0.15",
     "@types/node": "^22.10.0",
     "@types/pdfkit": "^0.17.6",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.1.10"
   },
   "author": "Akhil",
   "nitrostack": {

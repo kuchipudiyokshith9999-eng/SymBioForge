@@ -6,6 +6,8 @@ src/widgets/node_modules/
 dist/
 src/widgets/.next/
 src/widgets/out/
+web/.next/
+web/out/
 
 # Environment files
 .env
@@ -46,6 +48,7 @@ pids/
 # Coverage
 coverage/
 .nyc_output/
+.reports/
 
 # Uploads
 uploads/

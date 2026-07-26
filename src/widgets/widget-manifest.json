@@ -181,6 +181,52 @@
       "tags": ["carbon", "ESG", "metrics", "impact"]
     },
     {
+      "uri": "/impact-story",
+      "name": "Impact Story",
+      "description": "Human-readable environmental and economic equivalencies for the current ecosystem impact",
+      "examples": [
+        {
+          "name": "Impact Equivalencies",
+          "description": "Shows CO2, landfill, jobs, tax, and financial impact as readable outcomes",
+          "data": {
+            "rawMetrics": {
+              "co2Avoided": 0,
+              "landfillDiverted": 0,
+              "financialValue": 0
+            },
+            "equivalencies": {
+              "carsOffRoad": 0,
+              "landSavedSqMeters": 0,
+              "jobsCreated": 0
+            }
+          }
+        }
+      ],
+      "tags": ["impact", "story", "equivalencies", "ESG"]
+    },
+    {
+      "uri": "/district-dashboard",
+      "name": "District Environmental Intelligence",
+      "description": "SPCB officer view with compliance status, deadline alerts, risk heatmap, district targets, and carbon credits",
+      "examples": [
+        {
+          "name": "District Overview",
+          "description": "Shows compliance, risks, credits, and landfill diversion progress for a district",
+          "data": {
+            "districtName": "Sriperumbudur-Oragadam Industrial Corridor",
+            "compliance": {
+              "totalFactories": 0,
+              "filed": 0,
+              "pending": 0,
+              "overdue": 0
+            },
+            "riskMap": []
+          }
+        }
+      ],
+      "tags": ["district", "SPCB", "governance", "risk", "compliance"]
+    },
+    {
       "uri": "/symbiosis-timeline",
       "name": "SymbioSim Time Machine",
       "description": "Animated 12-month ecosystem evolution replay with play/pause, speed controls, and score progression chart",
