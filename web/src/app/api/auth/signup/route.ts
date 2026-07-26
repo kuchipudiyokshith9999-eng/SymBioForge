@@ -7,6 +7,7 @@ import {
   getRequestIdentifier,
 } from "@/lib/server/rate-limit"
 import { getSupabaseServerClient, isSupabaseConfigured } from "@/lib/server/supabase"
+import { logger } from "@/lib/server/logger"
 
 const signupSchema = z.object({
   fullName: z.string().trim().min(2).max(120),
@@ -15,22 +16,28 @@ const signupSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
-  const rateLimit = consumeRateLimit({
-    key: `auth-signup:${getRequestIdentifier(request)}`,
-    limit: 5,
-    windowMs: 60 * 60 * 1000,
-  })
-  const rateLimitHeaders = buildRateLimitHeaders(rateLimit)
-
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: "Too many account creation attempts. Please wait and try again." },
-      { status: 429, headers: rateLimitHeaders }
-    )
-  }
+  let emailForLog = "unknown";
 
   try {
-    const payload = signupSchema.parse(await request.json())
+    const json = await request.json();
+    emailForLog = typeof json.email === "string" ? json.email : "unknown";
+
+    const rateLimit = consumeRateLimit({
+      key: `auth-signup:${getRequestIdentifier(request)}`,
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    })
+    const rateLimitHeaders = buildRateLimitHeaders(rateLimit)
+
+    if (!rateLimit.allowed) {
+      logger.warn("Rate limit exceeded for signup", { ip: getRequestIdentifier(request) });
+      return NextResponse.json(
+        { error: "Too many account creation attempts. Please wait and try again." },
+        { status: 429, headers: rateLimitHeaders }
+      )
+    }
+
+    const payload = signupSchema.parse(json)
 
     if (!isSupabaseConfigured()) {
       return NextResponse.json({ error: "Supabase auth is not configured." }, { status: 503, headers: rateLimitHeaders })
@@ -52,19 +59,25 @@ export async function POST(request: NextRequest) {
     })
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      logger.warn("Signup failed", { email: emailForLog, reason: error.message });
+      // GENERIC ERROR: Prevent email enumeration. Supabase might return "User already registered"
+      // We return a generic message if it fails. 
+      return NextResponse.json({ error: "Unable to create account. Ensure requirements are met and try again." }, { status: 400 })
     }
 
     if (data.session) {
       setAuthCookies(data.session)
     }
 
+    logger.info("Successful signup", { userId: data.user?.id, email: emailForLog });
+
     return NextResponse.json({
       user: data.user ? toAuthUserSummary(data.user) : null,
       requiresEmailVerification: !data.session,
     }, { headers: rateLimitHeaders })
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unable to create account."
-    return NextResponse.json({ error: message }, { status: 400, headers: rateLimitHeaders })
+    logger.error("Signup route error", error, { email: emailForLog });
+    // GENERIC ERROR: Don't leak Zod validation internals
+    return NextResponse.json({ error: "Invalid registration payload." }, { status: 400 })
   }
 }

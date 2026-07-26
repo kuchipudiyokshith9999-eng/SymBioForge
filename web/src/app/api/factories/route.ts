@@ -6,9 +6,11 @@ import {
   getRequestIdentifier,
 } from "@/lib/server/rate-limit"
 import { getSyncedEngine, persistFactory } from "@/lib/server/synced-engine"
+import { requireAuthenticatedUser } from "@/lib/server/auth"
 import { logger } from "@/lib/server/logger"
 
 export async function GET() {
+  await requireAuthenticatedUser()
   const engine = await getSyncedEngine()
   const factories = engine.getFactories()
   return NextResponse.json({ factories })
@@ -30,6 +32,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    await requireAuthenticatedUser()
     const payload = factoryRegistrationSchema.parse(await request.json())
     const engine = await getSyncedEngine()
     const factory = engine.registerFactory(payload)

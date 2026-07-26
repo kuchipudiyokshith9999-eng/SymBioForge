@@ -9,6 +9,7 @@ import {
   getRequestIdentifier,
 } from "@/lib/server/rate-limit"
 import { getSyncedEngine, persistFactory } from "@/lib/server/synced-engine"
+import { requireAuthenticatedUser } from "@/lib/server/auth"
 
 const COIMBATORE_CENTER = {
   lat: 11.0168,
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    await requireAuthenticatedUser()
     const { messages } = chatRequestSchema.parse(await req.json())
 
     if (!process.env.GROQ_API_KEY) {
