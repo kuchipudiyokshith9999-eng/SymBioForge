@@ -1,4 +1,4 @@
-import { McpApp, Module, ConfigModule, OAuthModule } from '@nitrostack/core';
+import { McpApp, Module, ConfigModule } from '@nitrostack/core';
 import { CalculatorModule } from './modules/calculator/calculator.module.js';
 import { SymbioForgeModule } from './modules/symbioforge.module.js';
 import { SystemHealthCheck } from './health/system.health.js';
@@ -18,12 +18,6 @@ import { SystemHealthCheck } from './health/system.health.js';
   description: 'SymbioForge — Autonomous Circular Manufacturing Intelligence. 8 AI agents for industrial symbiosis.',
   imports: [
     ConfigModule.forRoot(),
-    OAuthModule.forRoot({
-      required: false,
-      resourceUri: 'http://localhost:3000/mcp',
-      authorizationServers: []
-    }),
-
     CalculatorModule,
     SymbioForgeModule
   ],
