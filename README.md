@@ -132,6 +132,7 @@ npm run dev
 | `control-swarm` | Start, stop, or reset the autonomous agent swarm | Agent Swarm Monitor |
 | `trigger-disruption` | Simulate a factory shutdown, watch Sentinel self-heal | Agent Swarm Monitor |
 | `get-ecosystem-map` | Factory network with symbiotic waste flow edges | Ecosystem Map |
+| `get-symbiosis-analysis` | Geographic analysis map: producers, takers, heatmap, tonnage, material filters | Symbiosis Data Analysis |
 | `get-opportunity-feed` | Ranked matches and product concepts by score | Opportunity Feed |
 | `get-carbon-metrics` | CO2 avoided, landfill diverted, water saved, financial value | Carbon Dashboard |
 | `get-product-concepts` | AI-invented products from waste streams | Product Cards |

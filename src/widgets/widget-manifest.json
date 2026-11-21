@@ -241,6 +241,26 @@
         }
       ],
       "tags": ["simulation", "timeline", "animation", "demo"]
+    },
+    {
+      "uri": "/symbiosis-analysis",
+      "name": "Symbiosis Data Analysis",
+      "description": "Geographic map of residual-material producers and takers with heatmap, tonnage bubbles, material filters and breakdown",
+      "examples": [
+        {
+          "name": "Cluster analysis",
+          "description": "All producers across the Coimbatore cluster",
+          "data": {
+            "success": true,
+            "region": "Coimbatore Industrial Cluster",
+            "initialCategory": null,
+            "producers": [],
+            "takers": [],
+            "flows": []
+          }
+        }
+      ],
+      "tags": ["map", "geographic", "heatmap", "analysis", "waste"]
     }
   ],
   "generatedAt": "2026-07-26T00:00:00.000Z"

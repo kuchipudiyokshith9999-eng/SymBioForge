@@ -14,6 +14,7 @@ import { ImpactStoryTools } from './impact-story.tools.js';
 import { DistrictDashboardTools } from './district-dashboard.tools.js';
 import { IngestTools } from './ingest.tools.js';
 import { SymbioForgePrompts } from './symbioforge.prompts.js';
+import { SymbiosisAnalysisTools } from './symbiosis-analysis.tools.js';
 
 @Module({
   name: 'symbioforge',
@@ -34,6 +35,7 @@ import { SymbioForgePrompts } from './symbioforge.prompts.js';
     DistrictDashboardTools,
     IngestTools,
     SymbioForgePrompts,
+    SymbiosisAnalysisTools,
   ]
 })
 export class SymbioForgeModule {}
