@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server"
 
+// Report the live timestamp/status on every request, not a build-time snapshot
+export const dynamic = "force-dynamic"
+
 export async function GET() {
   try {
     // Basic health check response
