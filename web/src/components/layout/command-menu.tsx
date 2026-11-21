@@ -4,6 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import {
   Factory,
+  Map as MapIcon,
   Lightbulb,
   LayoutDashboard,
   Settings,
@@ -68,6 +69,10 @@ export function CommandMenu() {
           <CommandItem onSelect={() => runCommand(() => router.push("/ecosystem"))}>
             <Network className="mr-2 h-4 w-4" />
             <span>Ecosystem</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => router.push("/symbiosis-map"))}>
+            <MapIcon className="mr-2 h-4 w-4" />
+            <span>Symbiosis Map</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => router.push("/agents"))}>
             <Bot className="mr-2 h-4 w-4" />

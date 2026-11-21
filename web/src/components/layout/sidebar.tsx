@@ -17,7 +17,8 @@ import {
   ScrollText,
   BookOpen,
   Settings,
-  Leaf
+  Leaf,
+  Map as MapIcon
 } from "lucide-react"
 
 const routes = [
@@ -28,6 +29,7 @@ const routes = [
   { label: "Waste Streams", icon: Recycle, href: "/waste-streams", color: "text-zinc-300" },
   { label: "Products", icon: Lightbulb, href: "/products", color: "text-zinc-300" },
   { label: "Ecosystem", icon: Network, href: "/ecosystem", color: "text-zinc-300" },
+  { label: "Symbiosis Map", icon: MapIcon, href: "/symbiosis-map", color: "text-emerald-400" },
   { label: "Opportunities", icon: TrendingUp, href: "/opportunities", color: "text-emerald-400" },
   { label: "Compliance", icon: FileCheck2, href: "/compliance", color: "text-zinc-300" },
   { label: "Agents", icon: Bot, href: "/agents", color: "text-zinc-300" },
