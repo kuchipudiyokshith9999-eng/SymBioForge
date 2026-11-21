@@ -1,6 +1,7 @@
-import { expect, test, describe, vi } from 'vitest';
+import { expect, test, describe, vi, beforeEach } from 'vitest';
 import { GET, POST } from '../../app/api/factories/route';
 import { NextRequest } from 'next/server';
+import { guardRoute } from '@/lib/server/auth';
 
 // Mock the synced engine so we don't try to actually hit DB or complex logic in tests
 vi.mock('@/lib/server/synced-engine', () => ({
@@ -19,17 +20,25 @@ vi.mock('@/lib/server/rate-limit', () => ({
 }));
 
 // Mock auth
+// Mock auth — routes call guardRoute(), which must resolve for authorised requests
 vi.mock('@/lib/server/auth', () => ({
+  guardRoute: vi.fn().mockResolvedValue(undefined),
   requireAuthenticatedUser: vi.fn().mockResolvedValue({ id: 'test-user' })
 }));
 
 describe('Factories API Route', () => {
+  // Reset call history (keeps mock implementations) so per-test call assertions are meaningful
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   test('GET /api/factories returns list of factories', async () => {
     const res = await GET();
     const data = await res.json();
     expect(res.status).toBe(200);
     expect(data.factories).toHaveLength(1);
     expect(data.factories[0].name).toBe('Mock Factory');
+    expect(guardRoute).toHaveBeenCalled();
   });
 
   test('POST /api/factories validates and creates a factory', async () => {
@@ -57,6 +66,7 @@ describe('Factories API Route', () => {
     const data = await res.json();
     expect(res.status).toBe(201);
     expect(data.factory.name).toBe('New Factory');
+    expect(guardRoute).toHaveBeenCalled();
   });
 
   test('POST /api/factories returns 400 on invalid payload', async () => {
@@ -66,6 +76,9 @@ describe('Factories API Route', () => {
     });
 
     const res = await POST(req);
+    const data = await res.json();
     expect(res.status).toBe(400);
+    // Must be rejected by validation, not by an auth/mock error
+    expect(data.error).toMatch(/industryType|location|expected/i);
   });
 });
