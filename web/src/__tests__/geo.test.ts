@@ -25,3 +25,26 @@ describe("geo helpers", () => {
     expect(columnHeight(400) - 80).toBeCloseTo((columnHeight(100) - 80) * 2, 0)
   })
 })
+
+describe("hexBin", () => {
+  test("puts nearby points in one bin and far points in another", async () => {
+    const { hexBin } = await import("../lib/geo")
+    const pts = [
+      { id: 1, lat: 11.0, lng: 77.0 },
+      { id: 2, lat: 11.0005, lng: 77.0005 }, // ~75 m away
+      { id: 3, lat: 11.05, lng: 77.05 }, // ~7.7 km away
+    ]
+    const bins = hexBin(pts, 1000, 11)
+    expect(bins).toHaveLength(2)
+    const big = bins.find((b) => b.items.length === 2)!
+    expect(big.items.map((p) => p.id).sort()).toEqual([1, 2])
+    // Bin centre is within one radius of its points
+    const d = Math.hypot((big.lat - 11) * 111_320, (big.lng - 77) * 111_320 * Math.cos((11 * Math.PI) / 180))
+    expect(d).toBeLessThanOrEqual(1000)
+  })
+
+  test("returns no bins for no points", async () => {
+    const { hexBin } = await import("../lib/geo")
+    expect(hexBin([], 500)).toEqual([])
+  })
+})

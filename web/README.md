@@ -20,6 +20,22 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Prospect Map data
+
+The **Prospects** page (`/prospects`) maps named manufacturing sites in Coimbatore, Bengaluru and
+Hyderabad as potential SymbioForge customers. Sites come from OpenStreetMap (© OpenStreetMap
+contributors, ODbL) and are classified and scored in `src/lib/prospects.ts`.
+
+Refresh the snapshot (takes a few minutes; Overpass can be slow or rate-limited):
+
+```bash
+node scripts/fetch-prospects.mjs            # all three cities
+node scripts/fetch-prospects.mjs bengaluru  # one city
+```
+
+This rewrites `src/data/prospects-osm.json`. To add a city, add its bounding box to
+`scripts/fetch-prospects.mjs` and to `CITIES` in `src/lib/prospects.ts`.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
